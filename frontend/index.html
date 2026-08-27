@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopEase — Microservices Online Shopping</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts & FontAwesome Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fa-solid fa-boxes-stacked brand-icon"></i>
+                <div class="brand-text">
+                    <span class="brand-title">ShopEase</span>
+                    <span class="brand-subtitle">Microservices Architecture</span>
+                </div>
+            </div>
+
+            <!-- Service Health Indicator Pills -->
+            <div class="service-status-bar">
+                <div class="status-pill" id="product-service-pill">
+                    <span class="pulse-dot status-checking"></span>
+                    <span class="pill-label">Product Svc (:8081):</span>
+                    <span class="pill-value" id="product-status-text">Checking...</span>
+                </div>
+                <div class="status-pill" id="order-service-pill">
+                    <span class="pulse-dot status-checking"></span>
+                    <span class="pill-label">Order Svc (:8082):</span>
+                    <span class="pill-value" id="order-status-text">Checking...</span>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <button class="nav-btn btn-cart" id="open-cart-btn">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span class="cart-label">Cart</span>
+                    <span class="cart-badge" id="cart-count">0</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="catalog-tab">
+                <i class="fa-solid fa-store"></i> Storefront
+            </button>
+            <button class="tab-btn" data-tab="orders-tab">
+                <i class="fa-solid fa-receipt"></i> Orders Management
+            </button>
+            <button class="tab-btn" data-tab="admin-tab">
+                <i class="fa-solid fa-sliders"></i> Product Admin
+            </button>
+            <button class="tab-btn" data-tab="architecture-tab">
+                <i class="fa-solid fa-network-wired"></i> Architecture Guide
+            </button>
+        </nav>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-content">
+
+        <!-- =================== TAB 1: CATALOG =================== -->
+        <section id="catalog-tab" class="tab-content active">
+            <!-- Hero / Controls Banner -->
+            <div class="catalog-header">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Search products by name, description or category...">
+                    <button id="clear-search-btn" class="clear-btn" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                
+                <div class="category-filters" id="category-filters">
+                    <button class="filter-chip active" data-category="ALL">All Categories</button>
+                    <button class="filter-chip" data-category="Electronics">Electronics</button>
+                    <button class="filter-chip" data-category="Computers">Computers</button>
+                    <button class="filter-chip" data-category="Audio">Audio</button>
+                    <button class="filter-chip" data-category="Wearables">Wearables</button>
+                    <button class="filter-chip" data-category="Accessories">Accessories</button>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="section-title-bar">
+                <h2>Product Catalog <span id="product-count-badge" class="count-tag">0 items</span></h2>
+                <button class="btn btn-secondary btn-sm" id="refresh-products-btn">
+                    <i class="fa-solid fa-rotate"></i> Refresh
+                </button>
+            </div>
+
+            <div class="products-grid" id="products-grid">
+                <!-- Dynamic product cards will be injected here -->
+                <div class="loading-state">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <p>Loading products from Product Service (:8081)...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================== TAB 2: ORDERS =================== -->
+        <section id="orders-tab" class="tab-content">
+            <div class="section-title-bar">
+                <div>
+                    <h2>Orders Dashboard</h2>
+                    <p class="section-subtitle">Real-time order lifecycle managed by Order Service (:8082)</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary btn-sm" id="refresh-orders-btn">
+                        <i class="fa-solid fa-rotate"></i> Refresh Orders
+                    </button>
+                </div>
+            </div>
+
+            <div class="orders-table-wrapper">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-tbody">
+                        <tr>
+                            <td colspan="7" class="text-center py-4">Loading orders...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- =================== TAB 3: ADMIN =================== -->
+        <section id="admin-tab" class="tab-content">
+            <div class="section-title-bar">
+                <div>
+                    <h2>Product Inventory Management</h2>
+                    <p class="section-subtitle">Add, update prices, modify stock levels, or remove catalog items</p>
+                </div>
+                <button class="btn btn-primary" id="open-add-product-modal-btn">
+                    <i class="fa-solid fa-plus"></i> Add New Product
+                </button>
+            </div>
+
+            <div class="admin-table-wrapper">
+                <table class="orders-table admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Image</th>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>In Stock</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-products-tbody">
+                        <tr>
+                            <td colspan="7" class="text-center py-4">Loading products...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- =================== TAB 4: ARCHITECTURE =================== -->
+        <section id="architecture-tab" class="tab-content">
+            <div class="architecture-container">
+                <div class="card arch-card">
+                    <h2><i class="fa-solid fa-diagram-project"></i> 2-Microservice Architecture Overview</h2>
+                    <p>This application implements the <strong>Database-per-Service</strong> pattern with synchronous HTTP REST communication between services.</p>
+
+                    <div class="diagram-box">
+                        <pre class="ascii-diagram">
++---------------------------------------------------------------------------------+
+|                        ShopEase Frontend (Browser / SPA)                        |
++----------------------------------------+----------------------------------------+
+                                         |
+                       +-----------------+-----------------+
+                       |                                   |
+         REST API (Port 8081)                 REST API (Port 8082)
+                       |                                   |
+                       v                                   v
+            +--------------------+               +--------------------+
+            |   Product Service  |               |   Order Service    |
+            |   (Spring Boot)    |&lt;==============|   (Spring Boot)    |
+            +---------+----------+  REST Client  +---------+----------+
+                      |       (Stock Check &amp; Deduction)    |
+                      v                                    v
+            +--------------------+               +--------------------+
+            | MySQL: product_db  |               |  MySQL: order_db   |
+            +--------------------+               +--------------------+
+                        </pre>
+                    </div>
+
+                    <div class="arch-grid">
+                        <div class="arch-box">
+                            <div class="arch-box-header">
+                                <span class="badge badge-product">Port 8081</span>
+                                <h3>Product Service</h3>
+                            </div>
+                            <ul>
+                                <li><strong>Database:</strong> <code>product_db</code> (MySQL)</li>
+                                <li><strong>Role:</strong> Catalog CRUD, stock checking, inventory deduction/restoration.</li>
+                                <li><strong>Key Endpoints:</strong>
+                                    <ul>
+                                        <li><code>GET /api/products</code></li>
+                                        <li><code>POST /api/products</code></li>
+                                        <li><code>PUT /api/products/{id}/decrement-stock</code></li>
+                                        <li><code>PUT /api/products/{id}/restore-stock</code></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="arch-box">
+                            <div class="arch-box-header">
+                                <span class="badge badge-order">Port 8082</span>
+                                <h3>Order Service</h3>
+                            </div>
+                            <ul>
+                                <li><strong>Database:</strong> <code>order_db</code> (MySQL)</li>
+                                <li><strong>Role:</strong> Order calculation, placement, cancellation, inter-service orchestration.</li>
+                                <li><strong>Key Endpoints:</strong>
+                                    <ul>
+                                        <li><code>POST /api/orders</code> (calls Product Service)</li>
+                                        <li><code>GET /api/orders</code></li>
+                                        <li><code>PUT /api/orders/{id}/status</code></li>
+                                        <li><code>DELETE /api/orders/{id}</code> (auto restocks)</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- =================== CART SLIDE-OUT DRAWER =================== -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <aside class="cart-drawer" id="cart-drawer">
+        <div class="cart-header">
+            <h3><i class="fa-solid fa-bag-shopping"></i> Shopping Cart</h3>
+            <button class="close-drawer-btn" id="close-cart-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="cart-items-container" id="cart-items-list">
+            <!-- Dynamic Cart items -->
+            <div class="empty-cart-state">
+                <i class="fa-solid fa-cart-arrow-down"></i>
+                <p>Your cart is empty.</p>
+                <span>Add some products from the catalog to get started!</span>
+            </div>
+        </div>
+
+        <div class="cart-footer" id="cart-footer" style="display: none;">
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="cart-subtotal">$0.00</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total Amount</span>
+                    <span id="cart-total">$0.00</span>
+                </div>
+            </div>
+
+            <!-- Customer Checkout Form -->
+            <form id="checkout-form" class="checkout-form">
+                <h4>Customer Details</h4>
+                <div class="form-group">
+                    <label for="cust-name">Full Name *</label>
+                    <input type="text" id="cust-name" required placeholder="e.g. Alice Johnson">
+                </div>
+                <div class="form-group">
+                    <label for="cust-email">Email Address *</label>
+                    <input type="email" id="cust-email" required placeholder="e.g. alice@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="cust-address">Shipping Address *</label>
+                    <textarea id="cust-address" rows="2" required placeholder="Street address, City, Country"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block btn-checkout" id="place-order-btn">
+                    <i class="fa-solid fa-lock"></i> Place Order ($<span id="btn-total-amount">0.00</span>)
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- =================== ADD / EDIT PRODUCT MODAL =================== -->
+    <div class="modal" id="product-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="product-modal-title">Add New Product</h3>
+                <button class="modal-close" id="close-product-modal-btn">&times;</button>
+            </div>
+            <form id="product-form">
+                <input type="hidden" id="prod-id">
+                <div class="form-group">
+                    <label for="prod-name">Product Name *</label>
+                    <input type="text" id="prod-name" required placeholder="e.g. Wireless Noise Canceling Headphones">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="prod-category">Category *</label>
+                        <select id="prod-category" required>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Computers">Computers</option>
+                            <option value="Audio">Audio</option>
+                            <option value="Wearables">Wearables</option>
+                            <option value="Accessories">Accessories</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-price">Price ($) *</label>
+                        <input type="number" id="prod-price" step="0.01" min="0.01" required placeholder="99.99">
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-stock">Initial Stock *</label>
+                        <input type="number" id="prod-stock" min="0" required placeholder="20">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="prod-image">Image URL</label>
+                    <input type="url" id="prod-image" placeholder="https://images.unsplash.com/...">
+                </div>
+                <div class="form-group">
+                    <label for="prod-description">Description</label>
+                    <textarea id="prod-description" rows="3" placeholder="Detailed product specifications..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancel-product-modal-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="save-product-btn">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

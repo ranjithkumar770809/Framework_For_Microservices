@@ -1,0 +1,11 @@
+com\shopping\product\ProductServiceApplication.class
+com\shopping\product\service\ProductService.class
+com\shopping\product\exception\ResourceNotFoundException.class
+com\shopping\product\entity\Product.class
+com\shopping\product\dto\ProductRequest.class
+com\shopping\product\controller\ProductController.class
+com\shopping\product\repository\ProductRepository.class
+com\shopping\product\exception\InsufficientStockException.class
+com\shopping\product\exception\GlobalExceptionHandler.class
+com\shopping\product\dto\ApiResponse.class
+com\shopping\product\dto\StockUpdateRequest.class

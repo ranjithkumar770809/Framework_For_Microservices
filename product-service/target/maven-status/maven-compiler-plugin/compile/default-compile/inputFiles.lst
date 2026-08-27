@@ -1,0 +1,11 @@
+F:\Sem 7\Framework for Microservices\Assignment-2 ( Project )\product-service\src\main\java\com\shopping\product\controller\ProductController.java
+F:\Sem 7\Framework for Microservices\Assignment-2 ( Project )\product-service\src\main\java\com\shopping\product\dto\ApiResponse.java
+F:\Sem 7\Framework for Microservices\Assignment-2 ( Project )\product-service\src\main\java\com\shopping\product\dto\ProductRequest.java
+F:\Sem 7\Framework for Microservices\Assignment-2 ( Project )\product-service\src\main\java\com\shopping\product\dto\StockUpdateRequest.java
+F:\Sem 7\Framework for Microservices\Assignment-2 ( Project )\product-service\src\main\java\com\shopping\product\entity\Product.java
+F:\Sem 7\Framework for Microservices\Assignment-2 ( Project )\product-service\src\main\java\com\shopping\product\exception\GlobalExceptionHandler.java
+F:\Sem 7\Framework for Microservices\Assignment-2 ( Project )\product-service\src\main\java\com\shopping\product\exception\InsufficientStockException.java
+F:\Sem 7\Framework for Microservices\Assignment-2 ( Project )\product-service\src\main\java\com\shopping\product\exception\ResourceNotFoundException.java
+F:\Sem 7\Framework for Microservices\Assignment-2 ( Project )\product-service\src\main\java\com\shopping\product\ProductServiceApplication.java
+F:\Sem 7\Framework for Microservices\Assignment-2 ( Project )\product-service\src\main\java\com\shopping\product\repository\ProductRepository.java
+F:\Sem 7\Framework for Microservices\Assignment-2 ( Project )\product-service\src\main\java\com\shopping\product\service\ProductService.java
