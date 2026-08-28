@@ -27,6 +27,9 @@ public class OrderItem {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
 
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     @JsonBackReference
@@ -35,12 +38,13 @@ public class OrderItem {
     public OrderItem() {
     }
 
-    public OrderItem(Long productId, String productName, BigDecimal unitPrice, Integer quantity, BigDecimal subtotal) {
+    public OrderItem(Long productId, String productName, BigDecimal unitPrice, Integer quantity, BigDecimal subtotal, String imageUrl) {
         this.productId = productId;
         this.productName = productName;
         this.unitPrice = unitPrice;
         this.quantity = quantity;
         this.subtotal = subtotal;
+        this.imageUrl = imageUrl;
     }
 
     public Long getId() {
@@ -89,6 +93,14 @@ public class OrderItem {
 
     public void setSubtotal(BigDecimal subtotal) {
         this.subtotal = subtotal;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public Order getOrder() {

@@ -1,6 +1,7 @@
 /**
  * ShopEase — Microservices Online Shopping Frontend Application
  * Handles interaction with Product Service (port 8081) and Order Service (port 8082).
+ * Features Amazon-Style Order Management & Interactive Architecture Guide.
  */
 
 const PRODUCT_API = 'http://localhost:8081/api/products';
@@ -11,12 +12,14 @@ let products = [];
 let orders = [];
 let cart = JSON.parse(localStorage.getItem('shopease_cart') || '[]');
 let activeCategory = 'ALL';
+let activeOrderFilter = 'ALL';
 let searchKeyword = '';
 
 // DOM Elements
 const productsGrid = document.getElementById('products-grid');
 const productCountBadge = document.getElementById('product-count-badge');
-const ordersTbody = document.getElementById('orders-tbody');
+const ordersCardsContainer = document.getElementById('orders-cards-container');
+const ordersTabCount = document.getElementById('orders-tab-count');
 const adminProductsTbody = document.getElementById('admin-products-tbody');
 const cartCount = document.getElementById('cart-count');
 const cartDrawer = document.getElementById('cart-drawer');
@@ -43,7 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabs();
     initCartDrawer();
     initSearchAndFilters();
+    initOrderFilters();
     initAdminModal();
+    initTrackModal();
     updateCartUI();
 
     // Fetch initial data
@@ -110,7 +115,10 @@ function initTabs() {
 
             btn.classList.add('active');
             const targetId = btn.dataset.tab;
-            document.getElementById(targetId).classList.add('active');
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
 
             if (targetId === 'orders-tab') {
                 fetchOrders();
@@ -137,27 +145,30 @@ async function fetchProducts() {
             products = json.data;
             renderCatalog();
             renderAdminProducts();
-        } else {
-            showToast('Failed to load products from server.', 'error');
         }
     } catch (err) {
         console.error('Error fetching products:', err);
-        productsGrid.innerHTML = `
-            <div class="empty-cart-state" style="grid-column: 1/-1;">
-                <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;"></i>
-                <p>Unable to connect to Product Service (:8081)</p>
-                <span>Please ensure Product Service is started and running.</span>
-            </div>`;
+        if (productsGrid) {
+            productsGrid.innerHTML = `
+                <div class="empty-cart-state" style="grid-column: 1/-1;">
+                    <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;"></i>
+                    <p>Unable to connect to Product Service (:8081)</p>
+                    <span>Please ensure Product Service is running on Port 8081.</span>
+                </div>`;
+        }
     }
 }
 
 function renderCatalog() {
+    if (!productsGrid) return;
     let filtered = products;
     if (activeCategory !== 'ALL') {
         filtered = filtered.filter(p => p.category.toLowerCase() === activeCategory.toLowerCase());
     }
 
-    productCountBadge.textContent = `${filtered.length} items`;
+    if (productCountBadge) {
+        productCountBadge.textContent = `${filtered.length} items`;
+    }
 
     if (filtered.length === 0) {
         productsGrid.innerHTML = `
@@ -243,25 +254,29 @@ function initSearchAndFilters() {
     });
 
     let searchTimeout;
-    searchInput.addEventListener('input', (e) => {
-        searchKeyword = e.target.value.trim();
-        clearSearchBtn.style.display = searchKeyword ? 'block' : 'none';
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchKeyword = e.target.value.trim();
+            if (clearSearchBtn) clearSearchBtn.style.display = searchKeyword ? 'block' : 'none';
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                fetchProducts();
+            }, 300);
+        });
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            searchKeyword = '';
+            clearSearchBtn.style.display = 'none';
             fetchProducts();
-        }, 300);
-    });
+        });
+    }
 
-    clearSearchBtn.addEventListener('click', () => {
-        searchInput.value = '';
-        searchKeyword = '';
-        clearSearchBtn.style.display = 'none';
+    document.getElementById('refresh-products-btn')?.addEventListener('click', () => {
         fetchProducts();
-    });
-
-    document.getElementById('refresh-products-btn').addEventListener('click', () => {
-        fetchProducts();
-        showToast('Products refreshed', 'info');
+        showToast('Products catalog refreshed', 'info');
     });
 }
 
@@ -272,20 +287,20 @@ function initCartDrawer() {
     const openCartBtn = document.getElementById('open-cart-btn');
     const closeCartBtn = document.getElementById('close-cart-btn');
 
-    openCartBtn.addEventListener('click', () => {
+    openCartBtn?.addEventListener('click', () => {
         cartDrawer.classList.add('active');
         cartOverlay.classList.add('active');
     });
 
-    closeCartBtn.addEventListener('click', closeCart);
-    cartOverlay.addEventListener('click', closeCart);
+    closeCartBtn?.addEventListener('click', closeCart);
+    cartOverlay?.addEventListener('click', closeCart);
 
-    checkoutForm.addEventListener('submit', handleCheckout);
+    checkoutForm?.addEventListener('submit', handleCheckout);
 }
 
 function closeCart() {
-    cartDrawer.classList.remove('active');
-    cartOverlay.classList.remove('active');
+    cartDrawer?.classList.remove('active');
+    cartOverlay?.classList.remove('active');
 }
 
 function addToCart(productId) {
@@ -342,6 +357,7 @@ function saveCart() {
 }
 
 function updateCartUI() {
+    if (!cartCount) return;
     const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
     cartCount.textContent = totalCount;
 
@@ -352,11 +368,11 @@ function updateCartUI() {
                 <p>Your cart is empty.</p>
                 <span>Add some products from the catalog to get started!</span>
             </div>`;
-        cartFooter.style.display = 'none';
+        if (cartFooter) cartFooter.style.display = 'none';
         return;
     }
 
-    cartFooter.style.display = 'block';
+    if (cartFooter) cartFooter.style.display = 'block';
 
     let total = 0;
     cartItemsList.innerHTML = cart.map(item => {
@@ -381,9 +397,9 @@ function updateCartUI() {
     }).join('');
 
     const formattedTotal = `$${total.toFixed(2)}`;
-    cartSubtotal.textContent = formattedTotal;
-    cartTotal.textContent = formattedTotal;
-    btnTotalAmount.textContent = total.toFixed(2);
+    if (cartSubtotal) cartSubtotal.textContent = formattedTotal;
+    if (cartTotal) cartTotal.textContent = formattedTotal;
+    if (btnTotalAmount) btnTotalAmount.textContent = total.toFixed(2);
 }
 
 // ==============================================================================
@@ -395,12 +411,13 @@ async function handleCheckout(e) {
 
     const placeBtn = document.getElementById('place-order-btn');
     placeBtn.disabled = true;
-    placeBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing Order...`;
+    placeBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Placing Amazon Order...`;
 
     const orderPayload = {
         customerName: document.getElementById('cust-name').value.trim(),
         customerEmail: document.getElementById('cust-email').value.trim(),
         customerAddress: document.getElementById('cust-address').value.trim(),
+        paymentMethod: document.getElementById('cust-payment').value,
         items: cart.map(i => ({
             productId: i.productId,
             quantity: i.quantity
@@ -427,6 +444,9 @@ async function handleCheckout(e) {
             // Refresh product catalog (to reflect deducted stock) and orders list
             fetchProducts();
             fetchOrders();
+
+            // Switch to Orders Management tab to see newly placed order!
+            document.getElementById('tab-btn-orders')?.click();
         } else {
             showToast(json.message || 'Order placement failed. Check stock availability.', 'error');
         }
@@ -435,13 +455,30 @@ async function handleCheckout(e) {
         showToast('Network error contacting Order Service (:8082). Is it running?', 'error');
     } finally {
         placeBtn.disabled = false;
-        placeBtn.innerHTML = `<i class="fa-solid fa-lock"></i> Place Order ($<span id="btn-total-amount">${cartTotal.textContent.replace('$', '')}</span>)`;
+        placeBtn.innerHTML = `<i class="fa-solid fa-lock"></i> Place Order ($<span id="btn-total-amount">${cartTotal ? cartTotal.textContent.replace('$', '') : '0.00'}</span>)`;
     }
 }
 
 // ==============================================================================
-// 7. Orders Dashboard Operations
+// 7. Amazon-Style Orders Management
 // ==============================================================================
+function initOrderFilters() {
+    const filterButtons = document.querySelectorAll('.order-filter-btn');
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeOrderFilter = btn.dataset.orderFilter;
+            renderAmazonOrders();
+        });
+    });
+
+    document.getElementById('refresh-orders-btn')?.addEventListener('click', () => {
+        fetchOrders();
+        showToast('Orders refreshed from order_db', 'info');
+    });
+}
+
 async function fetchOrders() {
     try {
         const res = await fetch(ORDER_API);
@@ -449,78 +486,195 @@ async function fetchOrders() {
 
         if (json.success && Array.isArray(json.data)) {
             orders = json.data;
-            renderOrders();
+            if (ordersTabCount) {
+                ordersTabCount.textContent = orders.length;
+            }
+            renderAmazonOrders();
         }
     } catch (err) {
         console.error('Error fetching orders:', err);
-        if (ordersTbody) {
-            ordersTbody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center py-4" style="color:#ef4444;">
-                        <i class="fa-solid fa-triangle-exclamation"></i> Unable to connect to Order Service (:8082).
-                    </td>
-                </tr>`;
+        if (ordersCardsContainer) {
+            ordersCardsContainer.innerHTML = `
+                <div class="empty-cart-state">
+                    <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;"></i>
+                    <p>Unable to connect to Order Service (:8082)</p>
+                    <span>Please ensure Order Service is started and running.</span>
+                </div>`;
         }
     }
 }
 
-function renderOrders() {
-    if (!ordersTbody) return;
+function renderAmazonOrders() {
+    if (!ordersCardsContainer) return;
 
-    if (orders.length === 0) {
-        ordersTbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">No orders placed yet.</td></tr>`;
+    let filtered = orders;
+    if (activeOrderFilter === 'IN_TRANSIT') {
+        filtered = orders.filter(o => ['PLACED', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY'].includes(o.status));
+    } else if (activeOrderFilter === 'DELIVERED') {
+        filtered = orders.filter(o => o.status === 'DELIVERED');
+    } else if (activeOrderFilter === 'CANCELLED') {
+        filtered = orders.filter(o => o.status === 'CANCELLED');
+    }
+
+    if (filtered.length === 0) {
+        ordersCardsContainer.innerHTML = `
+            <div class="empty-cart-state">
+                <i class="fa-solid fa-box-archive"></i>
+                <p>No orders found in this view.</p>
+                <span>Orders you place will appear here with full shipment tracking.</span>
+            </div>`;
         return;
     }
 
-    ordersTbody.innerHTML = orders.map(order => {
-        const dateStr = order.orderDate ? new Date(order.orderDate).toLocaleString() : 'N/A';
-        const itemsSummary = (order.items || []).map(i => `${escapeHtml(i.productName)} (x${i.quantity})`).join(', ');
-
-        const statusBadgeClass = {
-            'PLACED': 'badge-placed',
-            'PENDING': 'badge-pending',
-            'SHIPPED': 'badge-shipped',
-            'DELIVERED': 'badge-delivered',
-            'CANCELLED': 'badge-cancelled'
-        }[order.status] || 'badge-placed';
-
+    ordersCardsContainer.innerHTML = filtered.map(order => {
+        const dateStr = order.orderDate ? new Date(order.orderDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
         const isCancelled = order.status === 'CANCELLED';
+        const isDelivered = order.status === 'DELIVERED';
+        const isShipped = order.status === 'SHIPPED' || order.status === 'OUT_FOR_DELIVERY';
+
+        // Stepper Progress Calculations
+        const steps = ['PLACED', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+        let activeStepIdx = steps.indexOf(order.status);
+        if (order.status === 'OUT_FOR_DELIVERY') activeStepIdx = 2;
+        if (activeStepIdx === -1 && !isCancelled) activeStepIdx = 0;
+
+        const progressPercent = isCancelled ? 0 : Math.min(100, Math.max(0, (activeStepIdx / (steps.length - 1)) * 100));
+
+        let headlineClass = 'headline-placed';
+        let headlineText = `<i class="fa-solid fa-box text-warning"></i> Order Placed — Preparing for Dispatch`;
+        if (isDelivered) {
+            headlineClass = 'headline-delivered';
+            headlineText = `<i class="fa-solid fa-circle-check" style="color:#166534;"></i> Delivered — Handed directly to customer`;
+        } else if (isShipped) {
+            headlineClass = 'headline-shipped';
+            headlineText = `<i class="fa-solid fa-truck-fast text-primary"></i> On the Way — In Transit`;
+        } else if (isCancelled) {
+            headlineClass = 'headline-cancelled';
+            headlineText = `<i class="fa-solid fa-ban text-danger"></i> Cancelled — Inventory Restocked`;
+        }
+
+        const itemsHtml = (order.items || []).map(item => {
+            const imgUrl = item.imageUrl || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80';
+            return `
+                <div class="order-item-row">
+                    <div class="order-item-left">
+                        <img src="${imgUrl}" alt="${escapeHtml(item.productName)}" class="order-item-img" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80'">
+                        <div class="order-item-info">
+                            <h4>${escapeHtml(item.productName)}</h4>
+                            <div class="order-item-meta">
+                                Qty: <strong>${item.quantity}</strong> &bull; Unit Price: <strong>$${Number(item.unitPrice).toFixed(2)}</strong> &bull; Subtotal: <strong>$${Number(item.subtotal).toFixed(2)}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary btn-sm" onclick="addToCart(${item.productId})">
+                            <i class="fa-solid fa-rotate-right"></i> Buy It Again
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
 
         return `
-            <tr>
-                <td><strong>${order.orderNumber}</strong></td>
-                <td style="font-size:0.8rem;color:#64748b;">${dateStr}</td>
-                <td>
-                    <strong>${escapeHtml(order.customerName)}</strong><br>
-                    <span style="font-size:0.8rem;color:#64748b;">${escapeHtml(order.customerEmail)}</span>
-                </td>
-                <td style="max-width:260px;font-size:0.85rem;" title="${escapeHtml(itemsSummary)}">
-                    ${escapeHtml(itemsSummary)}
-                </td>
-                <td><strong>$${Number(order.totalAmount).toFixed(2)}</strong></td>
-                <td>
-                    <select class="status-select ${statusBadgeClass}" onchange="changeOrderStatus(${order.id}, this.value)" ${isCancelled ? 'disabled' : ''}>
-                        <option value="PLACED" ${order.status === 'PLACED' ? 'selected' : ''}>PLACED</option>
-                        <option value="PENDING" ${order.status === 'PENDING' ? 'selected' : ''}>PENDING</option>
-                        <option value="SHIPPED" ${order.status === 'SHIPPED' ? 'selected' : ''}>SHIPPED</option>
-                        <option value="DELIVERED" ${order.status === 'DELIVERED' ? 'selected' : ''}>DELIVERED</option>
-                        <option value="CANCELLED" ${order.status === 'CANCELLED' ? 'selected' : ''}>CANCELLED</option>
-                    </select>
-                </td>
-                <td>
-                    <button class="btn btn-danger btn-sm" onclick="cancelOrder(${order.id})" ${isCancelled ? 'disabled' : ''} title="Cancel and Restore Stock">
-                        <i class="fa-solid fa-ban"></i> Cancel
-                    </button>
-                </td>
-            </tr>
+            <div class="amazon-order-card">
+                <!-- Header -->
+                <div class="order-card-header">
+                    <div class="order-header-left">
+                        <div class="order-header-cell">
+                            <span class="cell-label">Order Placed</span>
+                            <span class="cell-val">${dateStr}</span>
+                        </div>
+                        <div class="order-header-cell">
+                            <span class="cell-label">Total Amount</span>
+                            <span class="cell-val">$${Number(order.totalAmount).toFixed(2)}</span>
+                        </div>
+                        <div class="order-header-cell">
+                            <span class="cell-label">Ship To</span>
+                            <span class="cell-val" title="${escapeHtml(order.customerAddress)}">${escapeHtml(order.customerName)} <i class="fa-solid fa-chevron-down" style="font-size:0.65rem;"></i></span>
+                        </div>
+                        <div class="order-header-cell">
+                            <span class="cell-label">Payment Mode</span>
+                            <span class="cell-val">${escapeHtml(order.paymentMethod || 'Card / UPI')}</span>
+                        </div>
+                    </div>
+                    <div class="order-header-right">
+                        <span class="cell-label">Order #</span>
+                        <span class="order-id-tag">${order.orderNumber}</span>
+                    </div>
+                </div>
+
+                <!-- Stepper / Status -->
+                <div class="order-lifecycle-bar">
+                    <div class="delivery-headline ${headlineClass}">
+                        ${headlineText}
+                    </div>
+
+                    ${isCancelled ? `
+                        <div class="order-cancelled-banner">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <div>
+                                <strong>Order Cancelled:</strong> ${escapeHtml(order.cancellationReason || 'Cancelled before dispatch.')}
+                                <span style="display:block;font-size:0.78rem;font-weight:400;color:#7f1d1d;">Items have been returned to Product Service (:8081) catalog inventory.</span>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="order-stepper">
+                            <div class="stepper-line">
+                                <div class="stepper-line-progress" style="width: ${progressPercent}%;"></div>
+                            </div>
+                            <div class="step-item ${activeStepIdx >= 0 ? (activeStepIdx === 0 ? 'step-active' : 'step-done') : ''}">
+                                <div class="step-circle"><i class="fa-solid fa-receipt"></i></div>
+                                <span class="step-label">Ordered</span>
+                            </div>
+                            <div class="step-item ${activeStepIdx >= 1 ? (activeStepIdx === 1 ? 'step-active' : 'step-done') : ''}">
+                                <div class="step-circle"><i class="fa-solid fa-boxes-packing"></i></div>
+                                <span class="step-label">Processing</span>
+                            </div>
+                            <div class="step-item ${activeStepIdx >= 2 ? (activeStepIdx === 2 ? 'step-active' : 'step-done') : ''}">
+                                <div class="step-circle"><i class="fa-solid fa-truck"></i></div>
+                                <span class="step-label">Shipped</span>
+                            </div>
+                            <div class="step-item ${activeStepIdx >= 3 ? 'step-done' : ''}">
+                                <div class="step-circle"><i class="fa-solid fa-house-chimney"></i></div>
+                                <span class="step-label">Delivered</span>
+                            </div>
+                        </div>
+                    `}
+                </div>
+
+                <!-- Products in this Order -->
+                <div class="order-card-body">
+                    ${itemsHtml}
+                </div>
+
+                <!-- Card Footer Actions -->
+                <div class="order-card-footer">
+                    <div class="order-actions-left">
+                        <i class="fa-solid fa-barcode"></i> Tracking: <strong>${order.trackingNumber || 'TRK-AMZ-' + order.id}</strong>
+                    </div>
+                    <div class="order-actions-right">
+                        <button class="btn btn-secondary btn-sm" onclick="openTrackModal(${order.id})">
+                            <i class="fa-solid fa-location-dot"></i> Track Package
+                        </button>
+                        
+                        <!-- Status Changer for Testing / Admin -->
+                        <select class="status-select" onchange="changeOrderStatus(${order.id}, this.value)" ${isCancelled ? 'disabled' : ''} title="Change status to test lifecycle">
+                            <option value="PLACED" ${order.status === 'PLACED' ? 'selected' : ''}>PLACED</option>
+                            <option value="PROCESSING" ${order.status === 'PROCESSING' ? 'selected' : ''}>PROCESSING</option>
+                            <option value="SHIPPED" ${order.status === 'SHIPPED' ? 'selected' : ''}>SHIPPED</option>
+                            <option value="DELIVERED" ${order.status === 'DELIVERED' ? 'selected' : ''}>DELIVERED</option>
+                            <option value="CANCELLED" ${order.status === 'CANCELLED' ? 'selected' : ''}>CANCELLED</option>
+                        </select>
+
+                        <button class="btn btn-danger btn-sm" onclick="cancelOrder(${order.id})" ${isCancelled ? 'disabled' : ''} title="Cancel Order & Auto Restore Stock">
+                            <i class="fa-solid fa-ban"></i> Cancel Order
+                        </button>
+                    </div>
+                </div>
+            </div>
         `;
     }).join('');
 }
-
-document.getElementById('refresh-orders-btn')?.addEventListener('click', () => {
-    fetchOrders();
-    showToast('Orders refreshed', 'info');
-});
 
 async function changeOrderStatus(orderId, newStatus) {
     try {
@@ -546,7 +700,7 @@ async function changeOrderStatus(orderId, newStatus) {
 }
 
 async function cancelOrder(orderId) {
-    if (!confirm('Are you sure you want to cancel this order? The inventory will be automatically restored to the Product Service.')) {
+    if (!confirm('Are you sure you want to cancel this order? The inventory will be automatically restored to Product Service (:8081).')) {
         return;
     }
 
@@ -567,7 +721,72 @@ async function cancelOrder(orderId) {
 }
 
 // ==============================================================================
-// 8. Admin Product Modal & CRUD
+// 8. Track Package Modal
+// ==============================================================================
+function initTrackModal() {
+    const modal = document.getElementById('track-modal');
+    const closeBtn = document.getElementById('close-track-modal-btn');
+    closeBtn?.addEventListener('click', () => modal?.classList.remove('active'));
+}
+
+function openTrackModal(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    const modal = document.getElementById('track-modal');
+    const modalBody = document.getElementById('track-modal-body');
+
+    const isCancelled = order.status === 'CANCELLED';
+    const isDelivered = order.status === 'DELIVERED';
+    const isShipped = order.status === 'SHIPPED' || order.status === 'OUT_FOR_DELIVERY' || isDelivered;
+
+    modalBody.innerHTML = `
+        <div style="background:#f8fafc;padding:1rem;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:1.25rem;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;">
+                <span>Tracking ID: <strong>${order.trackingNumber || 'TRK-AMZ-' + order.id}</strong></span>
+                <span class="badge badge-product">${order.status}</span>
+            </div>
+            <div style="font-size:0.85rem;color:#64748b;">
+                Delivery to: <strong>${escapeHtml(order.customerName)}</strong>, ${escapeHtml(order.customerAddress)}
+            </div>
+        </div>
+
+        <div class="timeline-container">
+            <div class="timeline-point point-done">
+                <div class="point-dot"></div>
+                <div class="point-time">Step 1 &bull; Order Received</div>
+                <div class="point-title">Order Placed &amp; Stock Reserved</div>
+                <div class="point-desc">Order validated via Product Service (:8081) and saved to order_db.</div>
+            </div>
+
+            <div class="timeline-point ${order.status !== 'PLACED' && !isCancelled ? 'point-done' : (order.status === 'PLACED' ? 'point-active' : '')}">
+                <div class="point-dot"></div>
+                <div class="point-time">Step 2 &bull; Fulfillment Center</div>
+                <div class="point-title">Package Packed &amp; Labeled</div>
+                <div class="point-desc">Fulfillment center assigned tracking number ${order.trackingNumber || 'TRK-AMZ'}.</div>
+            </div>
+
+            <div class="timeline-point ${isShipped ? (isDelivered ? 'point-done' : 'point-active') : ''}">
+                <div class="point-dot"></div>
+                <div class="point-time">Step 3 &bull; Carrier Transit</div>
+                <div class="point-title">In Transit — Out for Delivery</div>
+                <div class="point-desc">Package is on vehicle out for final delivery.</div>
+            </div>
+
+            <div class="timeline-point ${isDelivered ? 'point-done' : ''}">
+                <div class="point-dot"></div>
+                <div class="point-time">Step 4 &bull; Completed</div>
+                <div class="point-title">${isDelivered ? 'Delivered to Customer' : 'Estimated Delivery'}</div>
+                <div class="point-desc">${isDelivered ? 'Package was handed directly to resident.' : 'Expected within 2-3 business days.'}</div>
+            </div>
+        </div>
+    `;
+
+    modal.classList.add('active');
+}
+
+// ==============================================================================
+// 9. Admin Product CRUD
 // ==============================================================================
 function initAdminModal() {
     const modal = document.getElementById('product-modal');
@@ -576,18 +795,18 @@ function initAdminModal() {
     const cancelBtn = document.getElementById('cancel-product-modal-btn');
     const form = document.getElementById('product-form');
 
-    openAddBtn.addEventListener('click', () => {
+    openAddBtn?.addEventListener('click', () => {
         document.getElementById('product-modal-title').textContent = 'Add New Product';
         document.getElementById('prod-id').value = '';
         form.reset();
         modal.classList.add('active');
     });
 
-    const closeModal = () => modal.classList.remove('active');
-    closeBtn.addEventListener('click', closeModal);
-    cancelBtn.addEventListener('click', closeModal);
+    const closeModal = () => modal?.classList.remove('active');
+    closeBtn?.addEventListener('click', closeModal);
+    cancelBtn?.addEventListener('click', closeModal);
 
-    form.addEventListener('submit', async (e) => {
+    form?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const prodId = document.getElementById('prod-id').value;
         const payload = {
@@ -636,7 +855,7 @@ function openEditProductModal(productId) {
     document.getElementById('prod-image').value = product.imageUrl || '';
     document.getElementById('prod-description').value = product.description || '';
 
-    document.getElementById('product-modal').classList.add('active');
+    document.getElementById('product-modal')?.classList.add('active');
 }
 
 async function deleteProduct(productId) {
@@ -659,10 +878,42 @@ async function deleteProduct(productId) {
 }
 
 // ==============================================================================
-// 9. Toast Notification System & Helpers
+// 10. Live Architecture Sandbox Playground
+// ==============================================================================
+async function runSandboxTest(action) {
+    const jsonView = document.getElementById('sandbox-json-view');
+    if (!jsonView) return;
+
+    jsonView.textContent = `Executing ${action}... Please wait.`;
+
+    try {
+        let url = '';
+        if (action === 'GET_PRODUCTS') url = PRODUCT_API;
+        else if (action === 'GET_ORDERS') url = ORDER_API;
+        else if (action === 'HEALTH_PRODUCT') url = 'http://localhost:8081/actuator/health';
+        else if (action === 'HEALTH_ORDER') url = 'http://localhost:8082/actuator/health';
+
+        const res = await fetch(url);
+        const data = await res.json();
+        jsonView.textContent = `// Response from ${url} (Status: ${res.status})\n` + JSON.stringify(data, null, 2);
+    } catch (err) {
+        jsonView.textContent = `// Error executing request: ${err.message}\nMake sure microservices are running on ports 8081 & 8082.`;
+    }
+}
+
+function clearSandboxConsole() {
+    const jsonView = document.getElementById('sandbox-json-view');
+    if (jsonView) {
+        jsonView.textContent = '// Console cleared. Click a test button above to run another REST request.';
+    }
+}
+
+// ==============================================================================
+// 11. Toast Notification System & Helpers
 // ==============================================================================
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
+    if (!container) return;
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
 

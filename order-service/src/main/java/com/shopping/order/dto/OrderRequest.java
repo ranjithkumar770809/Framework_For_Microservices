@@ -18,6 +18,8 @@ public class OrderRequest {
     @NotBlank(message = "Customer address is required")
     private String customerAddress;
 
+    private String paymentMethod;
+
     @NotEmpty(message = "Order must contain at least one item")
     @Valid
     private List<OrderItemRequest> items;
@@ -25,10 +27,11 @@ public class OrderRequest {
     public OrderRequest() {
     }
 
-    public OrderRequest(String customerName, String customerEmail, String customerAddress, List<OrderItemRequest> items) {
+    public OrderRequest(String customerName, String customerEmail, String customerAddress, String paymentMethod, List<OrderItemRequest> items) {
         this.customerName = customerName;
         this.customerEmail = customerEmail;
         this.customerAddress = customerAddress;
+        this.paymentMethod = paymentMethod;
         this.items = items;
     }
 
@@ -54,6 +57,14 @@ public class OrderRequest {
 
     public void setCustomerAddress(String customerAddress) {
         this.customerAddress = customerAddress;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
     }
 
     public List<OrderItemRequest> getItems() {

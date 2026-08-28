@@ -17,21 +17,21 @@
     <header class="navbar">
         <div class="nav-container">
             <div class="nav-brand">
-                <i class="fa-solid fa-boxes-stacked brand-icon"></i>
+                <i class="fa-brands fa-amazon brand-icon"></i>
                 <div class="brand-text">
                     <span class="brand-title">ShopEase</span>
-                    <span class="brand-subtitle">Microservices Architecture</span>
+                    <span class="brand-subtitle">Microservices Online Shopping</span>
                 </div>
             </div>
 
             <!-- Service Health Indicator Pills -->
             <div class="service-status-bar">
-                <div class="status-pill" id="product-service-pill">
+                <div class="status-pill" id="product-service-pill" title="Product Microservice">
                     <span class="pulse-dot status-checking"></span>
                     <span class="pill-label">Product Svc (:8081):</span>
                     <span class="pill-value" id="product-status-text">Checking...</span>
                 </div>
-                <div class="status-pill" id="order-service-pill">
+                <div class="status-pill" id="order-service-pill" title="Order Microservice">
                     <span class="pulse-dot status-checking"></span>
                     <span class="pill-label">Order Svc (:8082):</span>
                     <span class="pill-value" id="order-status-text">Checking...</span>
@@ -49,16 +49,16 @@
 
         <!-- Navigation Tabs -->
         <nav class="nav-tabs">
-            <button class="tab-btn active" data-tab="catalog-tab">
-                <i class="fa-solid fa-store"></i> Storefront
+            <button class="tab-btn active" data-tab="catalog-tab" id="tab-btn-catalog">
+                <i class="fa-solid fa-store"></i> Store Catalog
             </button>
-            <button class="tab-btn" data-tab="orders-tab">
-                <i class="fa-solid fa-receipt"></i> Orders Management
+            <button class="tab-btn" data-tab="orders-tab" id="tab-btn-orders">
+                <i class="fa-solid fa-box-open"></i> Orders Management <span class="tab-count-badge" id="orders-tab-count">0</span>
             </button>
-            <button class="tab-btn" data-tab="admin-tab">
+            <button class="tab-btn" data-tab="admin-tab" id="tab-btn-admin">
                 <i class="fa-solid fa-sliders"></i> Product Admin
             </button>
-            <button class="tab-btn" data-tab="architecture-tab">
+            <button class="tab-btn" data-tab="architecture-tab" id="tab-btn-arch">
                 <i class="fa-solid fa-network-wired"></i> Architecture Guide
             </button>
         </nav>
@@ -87,16 +87,15 @@
                 </div>
             </div>
 
-            <!-- Products Grid -->
+            <!-- Products Grid Header -->
             <div class="section-title-bar">
                 <h2>Product Catalog <span id="product-count-badge" class="count-tag">0 items</span></h2>
                 <button class="btn btn-secondary btn-sm" id="refresh-products-btn">
-                    <i class="fa-solid fa-rotate"></i> Refresh
+                    <i class="fa-solid fa-rotate"></i> Refresh Catalog
                 </button>
             </div>
 
             <div class="products-grid" id="products-grid">
-                <!-- Dynamic product cards will be injected here -->
                 <div class="loading-state">
                     <i class="fa-solid fa-spinner fa-spin"></i>
                     <p>Loading products from Product Service (:8081)...</p>
@@ -104,12 +103,12 @@
             </div>
         </section>
 
-        <!-- =================== TAB 2: ORDERS =================== -->
+        <!-- =================== TAB 2: AMAZON-STYLE ORDERS MANAGEMENT =================== -->
         <section id="orders-tab" class="tab-content">
             <div class="section-title-bar">
                 <div>
-                    <h2>Orders Dashboard</h2>
-                    <p class="section-subtitle">Real-time order lifecycle managed by Order Service (:8082)</p>
+                    <h2><i class="fa-solid fa-boxes-packing text-primary"></i> Your Orders & Management</h2>
+                    <p class="section-subtitle">Amazon-style persistent order lifecycle tracking powered by <strong>Order Service (:8082)</strong> &amp; <strong>order_db</strong></p>
                 </div>
                 <div class="header-actions">
                     <button class="btn btn-secondary btn-sm" id="refresh-orders-btn">
@@ -118,29 +117,24 @@
                 </div>
             </div>
 
-            <div class="orders-table-wrapper">
-                <table class="orders-table">
-                    <thead>
-                        <tr>
-                            <th>Order #</th>
-                            <th>Date</th>
-                            <th>Customer</th>
-                            <th>Items</th>
-                            <th>Total</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="orders-tbody">
-                        <tr>
-                            <td colspan="7" class="text-center py-4">Loading orders...</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- Order Status Filter Tabs -->
+            <div class="order-filter-bar">
+                <button class="order-filter-btn active" data-order-filter="ALL">All Orders</button>
+                <button class="order-filter-btn" data-order-filter="IN_TRANSIT">In Transit (Placed / Shipped)</button>
+                <button class="order-filter-btn" data-order-filter="DELIVERED">Delivered</button>
+                <button class="order-filter-btn" data-order-filter="CANCELLED">Cancelled</button>
+            </div>
+
+            <!-- Amazon-style Orders List Container -->
+            <div class="orders-list-container" id="orders-cards-container">
+                <div class="loading-state">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <p>Fetching orders from Order Service (:8082)...</p>
+                </div>
             </div>
         </section>
 
-        <!-- =================== TAB 3: ADMIN =================== -->
+        <!-- =================== TAB 3: ADMIN PRODUCT INVENTORY =================== -->
         <section id="admin-tab" class="tab-content">
             <div class="section-title-bar">
                 <div>
@@ -174,76 +168,189 @@
             </div>
         </section>
 
-        <!-- =================== TAB 4: ARCHITECTURE =================== -->
+        <!-- =================== TAB 4: ARCHITECTURE GUIDE (ENHANCED & INTERACTIVE) =================== -->
         <section id="architecture-tab" class="tab-content">
             <div class="architecture-container">
-                <div class="card arch-card">
-                    <h2><i class="fa-solid fa-diagram-project"></i> 2-Microservice Architecture Overview</h2>
-                    <p>This application implements the <strong>Database-per-Service</strong> pattern with synchronous HTTP REST communication between services.</p>
+                
+                <!-- Architecture Overview Hero -->
+                <div class="arch-hero-card">
+                    <div class="arch-badge"><i class="fa-solid fa-layer-group"></i> Architecture Overview</div>
+                    <h2>2-Microservice Architecture with Database-per-Service Pattern</h2>
+                    <p>Designed for high autonomy, resilience, and loose coupling. Each service is fully self-contained with its own private database and communicates over lightweight HTTP REST.</p>
+                </div>
 
-                    <div class="diagram-box">
-                        <pre class="ascii-diagram">
-+---------------------------------------------------------------------------------+
-|                        ShopEase Frontend (Browser / SPA)                        |
-+----------------------------------------+----------------------------------------+
-                                         |
-                       +-----------------+-----------------+
-                       |                                   |
-         REST API (Port 8081)                 REST API (Port 8082)
-                       |                                   |
-                       v                                   v
-            +--------------------+               +--------------------+
-            |   Product Service  |               |   Order Service    |
-            |   (Spring Boot)    |&lt;==============|   (Spring Boot)    |
-            +---------+----------+  REST Client  +---------+----------+
-                      |       (Stock Check &amp; Deduction)    |
-                      v                                    v
-            +--------------------+               +--------------------+
-            | MySQL: product_db  |               |  MySQL: order_db   |
-            +--------------------+               +--------------------+
-                        </pre>
-                    </div>
-
-                    <div class="arch-grid">
-                        <div class="arch-box">
-                            <div class="arch-box-header">
-                                <span class="badge badge-product">Port 8081</span>
-                                <h3>Product Service</h3>
+                <!-- Interactive Visual Architecture Topology -->
+                <div class="arch-topology-wrapper">
+                    <h3><i class="fa-solid fa-diagram-project text-primary"></i> System Topology &amp; Communication Flow</h3>
+                    
+                    <div class="topology-grid">
+                        <!-- Client Layer -->
+                        <div class="topology-layer client-layer">
+                            <div class="topo-card client-card">
+                                <div class="topo-icon"><i class="fa-solid fa-globe"></i></div>
+                                <h4>Web Frontend (SPA)</h4>
+                                <span class="topo-tech">HTML5 / CSS3 / Vanilla JS</span>
+                                <p>Browser Single Page Client with Live REST polling</p>
                             </div>
-                            <ul>
-                                <li><strong>Database:</strong> <code>product_db</code> (MySQL)</li>
-                                <li><strong>Role:</strong> Catalog CRUD, stock checking, inventory deduction/restoration.</li>
-                                <li><strong>Key Endpoints:</strong>
-                                    <ul>
-                                        <li><code>GET /api/products</code></li>
-                                        <li><code>POST /api/products</code></li>
-                                        <li><code>PUT /api/products/{id}/decrement-stock</code></li>
-                                        <li><code>PUT /api/products/{id}/restore-stock</code></li>
-                                    </ul>
-                                </li>
-                            </ul>
                         </div>
 
-                        <div class="arch-box">
-                            <div class="arch-box-header">
-                                <span class="badge badge-order">Port 8082</span>
-                                <h3>Order Service</h3>
+                        <!-- Connector Arrows -->
+                        <div class="topo-connectors">
+                            <div class="topo-line-left">
+                                <span class="proto-tag">REST / HTTP (:8081)</span>
+                                <i class="fa-solid fa-arrow-down"></i>
                             </div>
-                            <ul>
-                                <li><strong>Database:</strong> <code>order_db</code> (MySQL)</li>
-                                <li><strong>Role:</strong> Order calculation, placement, cancellation, inter-service orchestration.</li>
-                                <li><strong>Key Endpoints:</strong>
-                                    <ul>
-                                        <li><code>POST /api/orders</code> (calls Product Service)</li>
-                                        <li><code>GET /api/orders</code></li>
-                                        <li><code>PUT /api/orders/{id}/status</code></li>
-                                        <li><code>DELETE /api/orders/{id}</code> (auto restocks)</li>
-                                    </ul>
-                                </li>
-                            </ul>
+                            <div class="topo-line-right">
+                                <span class="proto-tag">REST / HTTP (:8082)</span>
+                                <i class="fa-solid fa-arrow-down"></i>
+                            </div>
+                        </div>
+
+                        <!-- Microservices Layer -->
+                        <div class="topology-layer services-layer">
+                            <!-- Product Service -->
+                            <div class="topo-card service-card product-card-topo">
+                                <div class="card-status-badge"><span class="pulse-dot status-online"></span> Port 8081</div>
+                                <div class="topo-icon"><i class="fa-solid fa-tags"></i></div>
+                                <h4>Product Service</h4>
+                                <span class="topo-tech">Spring Boot 3.3 &bull; JPA</span>
+                                <ul>
+                                    <li><i class="fa-solid fa-check"></i> Product Catalog CRUD</li>
+                                    <li><i class="fa-solid fa-check"></i> Stock Decrement &amp; Restock</li>
+                                    <li><i class="fa-solid fa-check"></i> Keyword &amp; Category Search</li>
+                                </ul>
+                            </div>
+
+                            <!-- Inter-Service REST Sync Arrow -->
+                            <div class="inter-service-arrow">
+                                <div class="arrow-badge">RestTemplate</div>
+                                <i class="fa-solid fa-arrow-left fa-beat"></i>
+                                <span class="arrow-subtext">Stock Verification &amp; Deduction</span>
+                            </div>
+
+                            <!-- Order Service -->
+                            <div class="topo-card service-card order-card-topo">
+                                <div class="card-status-badge"><span class="pulse-dot status-online"></span> Port 8082</div>
+                                <div class="topo-icon"><i class="fa-solid fa-truck-fast"></i></div>
+                                <h4>Order Service</h4>
+                                <span class="topo-tech">Spring Boot 3.3 &bull; JPA</span>
+                                <ul>
+                                    <li><i class="fa-solid fa-check"></i> Amazon-Style Lifecycle</li>
+                                    <li><i class="fa-solid fa-check"></i> Inter-Service Stock Check</li>
+                                    <li><i class="fa-solid fa-check"></i> Auto-Restock Compensation</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- DB Connectors -->
+                        <div class="topo-connectors db-connectors">
+                            <div class="topo-line-left"><i class="fa-solid fa-arrow-down"></i></div>
+                            <div class="topo-line-right"><i class="fa-solid fa-arrow-down"></i></div>
+                        </div>
+
+                        <!-- Database Layer -->
+                        <div class="topology-layer db-layer">
+                            <div class="topo-card db-card">
+                                <div class="topo-icon"><i class="fa-solid fa-database"></i></div>
+                                <h4>product_db</h4>
+                                <span class="topo-tech">MySQL / H2 Schema</span>
+                                <p><code>products</code> table (Isolated)</p>
+                            </div>
+
+                            <div class="db-isolation-barrier">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span>No Cross-Database Foreign Keys</span>
+                            </div>
+
+                            <div class="topo-card db-card">
+                                <div class="topo-icon"><i class="fa-solid fa-database"></i></div>
+                                <h4>order_db</h4>
+                                <span class="topo-tech">MySQL / H2 Schema</span>
+                                <p><code>orders</code> &amp; <code>order_items</code></p>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Interactive API Sandbox / Test Playground -->
+                <div class="arch-sandbox-card">
+                    <h3><i class="fa-solid fa-terminal text-primary"></i> Live Microservice REST Playground</h3>
+                    <p class="sandbox-sub">Click any button below to trigger live REST calls and inspect real responses directly:</p>
+                    
+                    <div class="sandbox-buttons">
+                        <button class="btn btn-secondary btn-sm" onclick="runSandboxTest('GET_PRODUCTS')">
+                            <i class="fa-solid fa-play"></i> GET /api/products (:8081)
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="runSandboxTest('GET_ORDERS')">
+                            <i class="fa-solid fa-play"></i> GET /api/orders (:8082)
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="runSandboxTest('HEALTH_PRODUCT')">
+                            <i class="fa-solid fa-heart-pulse"></i> Ping Product Svc Health
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="runSandboxTest('HEALTH_ORDER')">
+                            <i class="fa-solid fa-heart-pulse"></i> Ping Order Svc Health
+                        </button>
+                    </div>
+
+                    <div class="sandbox-output" id="sandbox-output">
+                        <div class="output-header">
+                            <span>Response Console</span>
+                            <button class="btn-sm clear-console-btn" onclick="clearSandboxConsole()">Clear</button>
+                        </div>
+                        <pre id="sandbox-json-view">// Click any test button above to execute a live REST API call...</pre>
+                    </div>
+                </div>
+
+                <!-- Distributed Transaction & Compensation Flow -->
+                <div class="arch-card">
+                    <h3><i class="fa-solid fa-rotate text-primary"></i> Distributed Consistency &amp; Compensation</h3>
+                    <div class="flow-steps">
+                        <div class="flow-step">
+                            <div class="step-num">1</div>
+                            <div class="step-body">
+                                <strong>User Places Order</strong>
+                                <p>Client submits items with quantity to <code>Order Service</code> (Port 8082).</p>
+                            </div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="step-num">2</div>
+                            <div class="step-body">
+                                <strong>Synchronous Stock Check &amp; Deduction</strong>
+                                <p><code>Order Service</code> invokes <code>Product Service</code> (Port 8081) via <code>RestTemplate</code> to check and decrement stock in <code>product_db</code>.</p>
+                            </div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="step-num">3</div>
+                            <div class="step-body">
+                                <strong>Order Persistence</strong>
+                                <p>Generates unique Order #, calculates total price, and saves Order &amp; Items to <code>order_db</code>.</p>
+                            </div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="step-num">4</div>
+                            <div class="step-body">
+                                <strong>Compensating Restock on Cancel</strong>
+                                <p>If an order is cancelled, <code>Order Service</code> calls <code>PUT /api/products/{id}/restore-stock</code> to automatically restore inventory.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Viva / Assignment Defense FAQ -->
+                <div class="arch-card">
+                    <h3><i class="fa-solid fa-graduation-cap text-primary"></i> Viva &amp; Exam Defense Guide</h3>
+                    <div class="faq-list">
+                        <div class="faq-item">
+                            <div class="faq-q"><strong>Q: Why Database-per-Service instead of a Shared Database?</strong></div>
+                            <div class="faq-a">Ensures domain encapsulation, independent scaling, and fault isolation. If order volume spikes and locks tables in <code>order_db</code>, browsing products in <code>product_db</code> remains completely unaffected.</div>
+                        </div>
+                        <div class="faq-item">
+                            <div class="faq-q"><strong>Q: How is data consistency maintained without cross-database foreign keys?</strong></div>
+                            <div class="faq-a">Logical IDs (e.g. <code>productId</code>) are stored in <code>order_items</code>. Business consistency is enforced programmatically via synchronous REST validation and compensating transactions (reversing stock on failure or cancellation).</div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </section>
     </main>
@@ -257,7 +364,6 @@
         </div>
 
         <div class="cart-items-container" id="cart-items-list">
-            <!-- Dynamic Cart items -->
             <div class="empty-cart-state">
                 <i class="fa-solid fa-cart-arrow-down"></i>
                 <p>Your cart is empty.</p>
@@ -291,6 +397,14 @@
                 <div class="form-group">
                     <label for="cust-address">Shipping Address *</label>
                     <textarea id="cust-address" rows="2" required placeholder="Street address, City, Country"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="cust-payment">Payment Method</label>
+                    <select id="cust-payment">
+                        <option value="Credit/Debit Card">Credit / Debit Card</option>
+                        <option value="UPI / Net Banking">UPI / Instant Net Banking</option>
+                        <option value="Cash on Delivery (COD)">Cash on Delivery (COD)</option>
+                    </select>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block btn-checkout" id="place-order-btn">
                     <i class="fa-solid fa-lock"></i> Place Order ($<span id="btn-total-amount">0.00</span>)
@@ -345,6 +459,19 @@
                     <button type="submit" class="btn btn-primary" id="save-product-btn">Save Product</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- =================== TRACK PACKAGE TIMELINE MODAL =================== -->
+    <div class="modal" id="track-modal">
+        <div class="modal-content track-modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-truck-ramp-box text-primary"></i> Track Shipment</h3>
+                <button class="modal-close" id="close-track-modal-btn">&times;</button>
+            </div>
+            <div id="track-modal-body">
+                <!-- Injected dynamically -->
+            </div>
         </div>
     </div>
 

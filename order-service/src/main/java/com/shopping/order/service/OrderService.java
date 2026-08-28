@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -68,14 +69,19 @@ public class OrderService {
         }
 
         // Step 3: Build Order and calculate total
-        String orderNumber = "ORD-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
-                + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        String randomSuffix = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        String orderNumber = "ORD-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + "-" + randomSuffix;
+        String trackingNumber = "TRK-AMZ-" + (100000 + new Random().nextInt(900000));
 
         Order order = new Order();
         order.setOrderNumber(orderNumber);
         order.setCustomerName(request.getCustomerName().trim());
         order.setCustomerEmail(request.getCustomerEmail().trim());
         order.setCustomerAddress(request.getCustomerAddress().trim());
+        order.setPaymentMethod(request.getPaymentMethod() != null && !request.getPaymentMethod().isBlank() 
+                ? request.getPaymentMethod() : "Credit/Debit Card");
+        order.setTrackingNumber(trackingNumber);
+        order.setEstimatedDeliveryDate(LocalDateTime.now().plusDays(4));
         order.setStatus(OrderStatus.PLACED);
 
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -92,7 +98,8 @@ public class OrderService {
                     product.getName(),
                     unitPrice,
                     itemReq.getQuantity(),
-                    subtotal
+                    subtotal,
+                    product.getImageUrl()
             );
             order.addItem(orderItem);
         }
@@ -163,6 +170,7 @@ public class OrderService {
         }
 
         order.setStatus(OrderStatus.CANCELLED);
+        order.setCancellationReason("Customer cancelled before delivery. Inventory restored.");
         Order updated = orderRepository.save(order);
         return new OrderResponse(updated);
     }

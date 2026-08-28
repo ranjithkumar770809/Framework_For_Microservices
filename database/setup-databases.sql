@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- Online Shopping Microservices Database Setup Script
--- Architecture: Database-per-Service Pattern
+-- Architecture: Database-per-Service Pattern (Amazon-Style Orders & Product Catalog)
 -- ==============================================================================
 
 -- 1. Create Databases for each Microservice
@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS `products` (
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Seed Initial Products Catalog
 INSERT INTO `products` (`id`, `name`, `description`, `price`, `stock`, `category`, `image_url`) VALUES
 (1, 'Apple iPhone 15 Pro', 'Titanium design with A17 Pro chip, 48MP camera, and Action Button (128GB, Natural Titanium).', 999.00, 25, 'Electronics', 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&auto=format&fit=crop&q=80'),
 (2, 'Sony WH-1000XM5 Wireless Headphones', 'Industry-leading noise canceling with Auto NC Optimizer, crystal clear hands-free calling.', 349.99, 40, 'Audio', 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80'),
@@ -47,8 +46,12 @@ CREATE TABLE IF NOT EXISTS `orders` (
     `customer_name` VARCHAR(255) NOT NULL,
     `customer_email` VARCHAR(255) NOT NULL,
     `customer_address` TEXT NOT NULL,
+    `payment_method` VARCHAR(50) DEFAULT 'Credit/Debit Card',
+    `tracking_number` VARCHAR(64),
     `order_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `estimated_delivery_date` DATETIME,
     `status` VARCHAR(50) NOT NULL DEFAULT 'PLACED',
+    `cancellation_reason` VARCHAR(500),
     `total_amount` DECIMAL(10, 2) NOT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -62,5 +65,14 @@ CREATE TABLE IF NOT EXISTS `order_items` (
     `unit_price` DECIMAL(10, 2) NOT NULL,
     `quantity` INT NOT NULL,
     `subtotal` DECIMAL(10, 2) NOT NULL,
+    `image_url` VARCHAR(500),
     CONSTRAINT `fk_order_items_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Seed Sample Amazon-Style Orders
+INSERT INTO `orders` (`id`, `order_number`, `customer_name`, `customer_email`, `customer_address`, `payment_method`, `tracking_number`, `order_date`, `status`, `total_amount`) VALUES
+(1, 'ORD-20260825-9A8B7C', 'Sarah Connor', 'sarah.connor@example.com', '456 Market St, Apt 12B, Seattle, WA', 'Credit Card', 'TRK-AMZ-883921', NOW() - INTERVAL 3 DAY, 'DELIVERED', 999.00),
+(2, 'ORD-20260827-4F1E8D', 'John Doe', 'john.doe@example.com', '123 Silicon Valley Blvd, San Jose, CA', 'UPI / Net Banking', 'TRK-AMZ-773419', NOW() - INTERVAL 1 DAY, 'SHIPPED', 449.49),
+(3, 'ORD-20260828-5C2D1A', 'Michael Scott', 'michael.scott@dundermifflin.com', '1725 Slough Avenue, Scranton, PA', 'Cash on Delivery', 'TRK-AMZ-991204', NOW() - INTERVAL 2 HOUR, 'PLACED', 1299.00),
+(4, 'ORD-20260826-1188AA', 'Alex Rivera', 'alex.rivera@example.com', '789 Broadway, New York, NY', 'Debit Card', 'TRK-AMZ-332189', NOW() - INTERVAL 2 DAY, 'CANCELLED', 399.00)
+ON DUPLICATE KEY UPDATE `status` = VALUES(`status`);

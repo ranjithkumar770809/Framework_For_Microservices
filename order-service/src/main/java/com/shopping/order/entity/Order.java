@@ -27,12 +27,24 @@ public class Order {
     @Column(name = "customer_address", nullable = false, length = 1000)
     private String customerAddress;
 
+    @Column(name = "payment_method", length = 50)
+    private String paymentMethod;
+
+    @Column(name = "tracking_number", length = 64)
+    private String trackingNumber;
+
     @Column(name = "order_date")
     private LocalDateTime orderDate;
+
+    @Column(name = "estimated_delivery_date")
+    private LocalDateTime estimatedDeliveryDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private OrderStatus status;
+
+    @Column(name = "cancellation_reason", length = 500)
+    private String cancellationReason;
 
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
@@ -51,11 +63,13 @@ public class Order {
     }
 
     public Order(String orderNumber, String customerName, String customerEmail, String customerAddress,
-                 OrderStatus status, BigDecimal totalAmount) {
+                 String paymentMethod, String trackingNumber, OrderStatus status, BigDecimal totalAmount) {
         this.orderNumber = orderNumber;
         this.customerName = customerName;
         this.customerEmail = customerEmail;
         this.customerAddress = customerAddress;
+        this.paymentMethod = paymentMethod;
+        this.trackingNumber = trackingNumber;
         this.status = status;
         this.totalAmount = totalAmount;
     }
@@ -63,6 +77,9 @@ public class Order {
     @PrePersist
     protected void onCreate() {
         this.orderDate = LocalDateTime.now();
+        if (this.estimatedDeliveryDate == null) {
+            this.estimatedDeliveryDate = LocalDateTime.now().plusDays(4);
+        }
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -123,6 +140,22 @@ public class Order {
         this.customerAddress = customerAddress;
     }
 
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public String getTrackingNumber() {
+        return trackingNumber;
+    }
+
+    public void setTrackingNumber(String trackingNumber) {
+        this.trackingNumber = trackingNumber;
+    }
+
     public LocalDateTime getOrderDate() {
         return orderDate;
     }
@@ -131,12 +164,28 @@ public class Order {
         this.orderDate = orderDate;
     }
 
+    public LocalDateTime getEstimatedDeliveryDate() {
+        return estimatedDeliveryDate;
+    }
+
+    public void setEstimatedDeliveryDate(LocalDateTime estimatedDeliveryDate) {
+        this.estimatedDeliveryDate = estimatedDeliveryDate;
+    }
+
     public OrderStatus getStatus() {
         return status;
     }
 
     public void setStatus(OrderStatus status) {
         this.status = status;
+    }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
     }
 
     public BigDecimal getTotalAmount() {
